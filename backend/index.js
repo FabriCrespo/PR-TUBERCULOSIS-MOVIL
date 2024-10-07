@@ -81,7 +81,24 @@ app.get('/paciente/:id', (req, res) => {
   });
 });
 
+// Ruta para obtener los datos de un establecimiento de salud por su id
+app.get('/establecimiento/:id', (req, res) => {
+  const establecimientosaludId = req.params.id;
 
+  const query = 'SELECT * FROM establecimientosalud WHERE idEstablecimeintoSalud = ?';
+  db.query(query, [establecimientosaludId], (err, result) => {
+    if (err) {
+      console.error('Error en la consulta:', err);  // Imprime el error en la consola
+      return res.status(500).send({ message: 'Error en el servidor' });
+    }
+    
+    if (result.length > 0) {
+      res.send(result[0]);  // Enviar solo el primer resultado
+    } else {
+      res.status(404).send({ message: 'Paciente no encontrado' });
+    }
+  });
+});
 
 app.get('/', (req, res) => {
   res.send('Servidor funcionando correctamente');

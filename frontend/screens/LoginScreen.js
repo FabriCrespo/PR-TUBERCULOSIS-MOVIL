@@ -9,6 +9,10 @@ export default function LoginScreen({ navigation }) {
         title="Go to User Info"
         onPress={() => navigation.navigate('UserInfo', { id: 1 })} // Navegar y pasar el id como parámetro
       />
+      <Button
+        title="Tutorial"
+        onPress={() => navigation.navigate('Tutorial')} 
+      />
     </View>
   );
 }

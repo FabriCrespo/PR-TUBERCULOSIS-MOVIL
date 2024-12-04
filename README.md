@@ -17,6 +17,7 @@
 - Conexión a internet estable.
 
 ### **Software Requerido**
+- Servidor PR-TUBERCULOSIS-WEB Corriendo <a href="https://github.com/augustoAlborta/PR-TUBERCULOSIS-WEB/tree/main" target="_blank">Url del proyecto Web</a>
 - Expo Go App: Instalada en el dispositivo móvil para ejecutar la aplicación.
 - Node.js: Versión 14 o superior instalada en el entorno de desarrollo.
 - Expo CLI: Instalado globalmente en el sistema de desarrollo.

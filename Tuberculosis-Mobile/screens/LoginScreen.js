@@ -1,13 +1,16 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { API_URL } from '@env';
 import { StyleSheet, Text, View, TouchableOpacity, TextInput, Image, Alert } from 'react-native';
 import userImage from '../assets/usuario.png'
+import { UserContext } from '../contexts/UserContext';
 export default function LoginScreen({ navigation }) {
   const [carnet_identidad, setCi] = useState('')
-
+  const { setUser } = useContext(UserContext);
   // Metodo LogIn
   const handleLogIn = () => {
     //Alert.alert(user, pass)
+    console.log(`${API_URL}/loginmobile`)
+    
     fetch(`${API_URL}/loginmobile`,
       {
         method: 'POST',
@@ -17,6 +20,8 @@ export default function LoginScreen({ navigation }) {
       .then(data => {
         if (data.message === 'Login successful') {
           navigation.navigate('Home');
+          console.log(data.user)
+          setUser(data.user)
         }
         else {
           Alert.alert('Error', 'Paciente no encontrado');
@@ -26,7 +31,7 @@ export default function LoginScreen({ navigation }) {
   };
   return (
     <View style={styles.container}>
-      <Text>Login Screen</Text>
+      <Text style={styles.welcomeText}>Inicio de sesion</Text>
       <View>
         <Image
           source={userImage}
@@ -95,4 +100,11 @@ const styles = StyleSheet.create({
     alignItems: 'center',
     justifyContent: 'center',
   },
+  welcomeText: {
+    fontSize: 28,
+    fontWeight: 'bold',
+    color: '#333', // Color de texto oscuro
+    marginBottom: 30, // Espacio entre el texto y los botones
+    textAlign: 'center',
+},
 });

@@ -1,42 +1,29 @@
-import React, { useEffect, useState } from 'react';
+import React, { useContext, useEffect, useState } from 'react';
 import { View, Text, StyleSheet, Image, ActivityIndicator } from 'react-native';
 import { useRoute } from '@react-navigation/native';
 import { API_URL } from '@env';
+import { UserContext } from '../contexts/UserContext';
 
 const placeholderImage = require('../assets/Paciente.png');
 
 const Paciente = () => {
   const route = useRoute();
   const { id } = route.params; // Obtener el id del paciente de los parámetros de la ruta
+  const { user } = useContext(UserContext);
   const [paciente, setPaciente] = useState(null);
   const [loading, setLoading] = useState(true);
-  const [nombreEstablecimiento, setNombreEstablecimiento] = useState(''); // Nuevo estado para el nombre del establecimiento
 
   useEffect(() => {
     const fetchPaciente = async () => {
       try {
-        const response = await fetch(`${API_URL}/paciente/${id}`);
+        const response = await fetch(`${API_URL}/paciente/${user.idPersona}`);
         const data = await response.json();
         console.log("Datos del paciente:", data); // Verifica los datos del paciente
         setPaciente(data);
-        if (data.EstablecimeintoSalud_idEstablecimeintoSalud) {
-          fetchNombreEstablecimiento(data.EstablecimeintoSalud_idEstablecimeintoSalud);
-        }
       } catch (error) {
         console.error('Error fetching paciente data:', error);
       } finally {
         setLoading(false);
-      }
-    };
-  
-    const fetchNombreEstablecimiento = async (idEstablecimiento) => {
-      try {
-        const response = await fetch(`${API_URL}/establecimiento/${idEstablecimiento}`);
-        const data = await response.json();
-        console.log("Datos del establecimiento:", data); // Verifica los datos del establecimiento
-        setNombreEstablecimiento(data?.nombreEstablecimiento); // Asigna el nombre del establecimiento
-      } catch (error) {
-        console.error('Error fetching establecimiento data:', error);
       }
     };
   
@@ -85,7 +72,7 @@ const Paciente = () => {
       <Text style={styles.label}>CI:</Text>
       <Text style={styles.details}>{paciente.CI ?? 'No disponible'}</Text>
       <Text style={styles.label}>Establecimiento de Salud:</Text>
-      <Text style={styles.details}>{nombreEstablecimiento || 'No disponible'}</Text>
+      <Text style={styles.details}>{paciente.nombreEstablecimiento || 'No disponible'}</Text>
     </View>
   );
   

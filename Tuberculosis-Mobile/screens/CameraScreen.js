@@ -6,14 +6,16 @@ import {
     Pressable,
     StatusBar,
     SafeAreaView,
+    Alert,
   } from "react-native";
   import * as MediaLibrary from "expo-media-library";
-  import React, { useState, useRef } from "react";
+  import React, { useState, useRef, useContext } from "react";
   
   import { Camera, CameraView, useCameraPermissions, useMicrophonePermissions } from "expo-camera";
   import { Audio } from "expo-av";
   import * as FileSystem from 'expo-file-system';
   import { API_URL } from '@env';
+import { UserContext } from "../contexts/UserContext";
   
   function CameraScreen() {
     const [permission, requestPermission] = useCameraPermissions();
@@ -21,6 +23,7 @@ import {
     const [videoPath, setVideoPath] = useState(null);
     const [recordingTime, setRecordingTime] = useState(0);
     const [type, setType] = React.useState("back");
+    const { user } = useContext(UserContext);
     function toggleCameraFacing() {
       setType((current) => (current === "back" ? "front" : "back"));
     }
@@ -36,40 +39,82 @@ import {
     };
   
     const sendVideoToApi = async (uri) => {
+      const timeout = 600000; // 10 minutos en milisegundos
+      const controller = new AbortController(); // Crear un controlador de abortos
+      const signal = controller.signal;
+    
+      // Configurar el timeout
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+    
       try {
         // Leer el contenido del archivo como base64
         const videoBase64 = await FileSystem.readAsStringAsync(uri, {
           encoding: FileSystem.EncodingType.Base64,
         });
-  
+    
         console.log("Archivo leído como base64");
-  
+        const now = new Date();
+        const formattedDate = now.toISOString().replace(/[-:T]/g, '').slice(0, 15) + now.toISOString().slice(17, 19);
+    
         // Crear el cuerpo de la solicitud
         const payload = {
-          nombre: "video.mov", // Nombre del archivo
+          nombre: `video${formattedDate}.mov`, // Nombre del archivo
           descripcion: "descripcion",
           video_base64: videoBase64, // Archivo en base64
-          persona_idPersona: 1
+          persona_idPersona: user.idPersona,
         };
-  
-        // Enviar a la API
-        const response = await fetch(`${API_URL}/videos`, {
+    
+        // Enviar a la API con un tiempo de espera
+        const response = await fetchWithTimeout(`${API_URL}/videos`, {
           method: 'POST',
           headers: {
             'Content-Type': 'application/json',
           },
           body: JSON.stringify(payload),
+          signal, // Pasar la señal del AbortController
         });
-  
+    
+        clearTimeout(timeoutId); // Cancelar el timeout si la solicitud es exitosa
+    
         if (!response.ok) {
+          console.log(response)
+          console.log(response.statusText)
           throw new Error(`Error en la API: ${response.statusText}`);
         }
-  
+    
         console.log("Video enviado con éxito:", await response.json());
+        Alert.alert("Video subido Correctamente");
       } catch (error) {
-        console.error("Error al enviar el video a la API:"+ error);
+        if (error.name === "AbortError") {
+          console.error("La solicitud fue cancelada por el tiempo de espera.");
+          Alert.alert("Error", "La solicitud excedió el tiempo de espera.");
+        } else {
+          console.error("Error al enviar el video a la API:", error);
+        }
       }
     };
+    const fetchWithTimeout = (url, options = {}, timeout = 60000) => {
+      const controller = new AbortController(); // Controlador para abortar la solicitud
+      const signal = controller.signal;
+    
+      // Crear un temporizador para abortar la solicitud después del timeout
+      const timeoutId = setTimeout(() => controller.abort(), timeout);
+    
+      // Pasar la señal al fetch
+      const fetchOptions = { ...options, signal };
+    
+      // Realizar la solicitud
+      return fetch(url, fetchOptions)
+        .then(response => {
+          clearTimeout(timeoutId); // Cancelar el timeout si se completa exitosamente
+          return response;
+        })
+        .catch(error => {
+          clearTimeout(timeoutId); // Cancelar el timeout también en caso de error
+          throw error; // Relanzar el error para manejarlo en la función que llama
+        });
+    };
+    
   
     const startRecording = async () => {
       setVideoPath(null);
